@@ -4,8 +4,10 @@ import cmd
 import sys
 import json
 import os.path
+import shlex
 from models.base_model import BaseModel
 from models.engine.file_storage import FileStorage
+from models import storage
 
 
 class HBNBCommand(cmd.Cmd):
@@ -55,17 +57,15 @@ class HBNBCommand(cmd.Cmd):
         instance.save()
         print(instance.id)
 
-    def do_show(self, arg):
+    def do_show(self, line):
         """
-        Shows the string representation of an instance based on the class name and ID.
-
-        Usage: show <class_name> <instance_id>
+        Prints the string representation of an instance based on the class name
+        and id - if they exist.
         """
-        args = arg.split()
+        args = line.split()
         if len(args) == 0:
             print("** class name missing **")
             return
-        class_name = args[0]
         if args[0] not in self.__models:
             print("** class doesn't exist **")
             return
@@ -74,14 +74,12 @@ class HBNBCommand(cmd.Cmd):
             return
 
         instance_id = args[1]
-        key = "{}.{}".format(class_name, instance_id)
+        key = "{}.{}".format(args[0], instance_id)
         objects = FileStorage().all()
         if key in objects:
             print(objects[key])
-            return
         else:
             print("** no instance found **")
-            return
 
     def do_destroy(self, arg):
         """
@@ -114,7 +112,8 @@ class HBNBCommand(cmd.Cmd):
 
     def do_all(self, arg):
         """
-        Prints string representations of all instances based on the class name or all instances if no class name is specified.
+        Prints string representations of all instances based on the class name
+        or all instances if no class name is specified.
 
         Usage: all [<class_name>]
         """

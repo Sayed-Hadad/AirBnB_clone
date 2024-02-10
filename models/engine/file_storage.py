@@ -1,5 +1,3 @@
-# models/engine/file_storage.py
-
 import json
 import os.path
 from models.base_model import BaseModel
@@ -19,6 +17,14 @@ class FileStorage:
 
     __file_path = 'file.json'
     __objects = {}
+    __model_classes = {
+        'BaseModel': BaseModel,
+        'State': State,
+        'City': City,
+        'Amenity': Amenity,
+        'Place': Place,
+        'Review': Review
+    }
 
     def all(self):
         """
@@ -42,32 +48,25 @@ class FileStorage:
         for key, value in FileStorage.__objects.items():
             obj_dic[key] = value.to_dict()
         json_objs = json.dumps(obj_dic, default=str)
-        with open(FileStorage.__file_path, 'w') as f:
-            f.write(json_objs)
+        try:
+            with open(FileStorage.__file_path, 'w') as f:
+                f.write(json_objs)
+        except Exception as e:
+            print(f"Error saving data: {e}")
 
     def reload(self):
         """
         Deserializes the JSON file to __objects
         """
-        if os.path.exists(FileStorage.__file_path):
-            with open(FileStorage.__file_path, 'r') as f:
-                obj_dict = json.load(f)
-                for key, value in obj_dict.items():
-                    class_name = value['__class__']
-                    if class_name == 'BaseModel':
-                        model_class = BaseModel
-                    elif class_name == 'State':
-                        model_class = State
-                    elif class_name == 'City':
-                        model_class = City
-                    elif class_name == 'Amenity':
-                        model_class = Amenity
-                    elif class_name == 'Place':
-                        model_class = Place
-                    elif class_name == 'Review':
-                        model_class = Review
-                    else:
-                        model_class = None
-                    if model_class:
-                        obj = model_class(**value)
-                        self.__objects[key] = obj
+        try:
+            if os.path.exists(FileStorage.__file_path):
+                with open(FileStorage.__file_path, 'r') as f:
+                    obj_dict = json.load(f)
+                    for key, value in obj_dict.items():
+                        class_name = value.get('__class__')
+                        model_class = self.__model_classes.get(class_name)
+                        if model_class:
+                            obj = model_class(**value)
+                            self.__objects[key] = obj
+        except Exception as e:
+            print(f"Error reloading data: {e}")
